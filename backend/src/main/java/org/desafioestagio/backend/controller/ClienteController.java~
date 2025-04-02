@@ -1,0 +1,48 @@
+package org.desafioestagio.backend.controller;
+
+import jakarta.validation.Valid;
+import org.desafioestagio.backend.dto.ClienteDTO;
+import org.desafioestagio.backend.service.ClienteService;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.awt.print.Pageable;
+import java.net.URI;
+
+@RestController
+@RequestMapping("/api/clientes")
+public class ClienteController {
+
+    private final ClienteService clienteService;
+
+    public ClienteController(ClienteService clienteService) {
+        this.clienteService = clienteService;
+    }
+
+    @GetMapping("/listar")
+    public Page<ClienteDTO> listar(Pageable pageable) {
+        return clienteService.listarTodos(pageable);
+    }
+
+    @GetMapping("/cadastro")
+    public Page<ClienteDTO> cadastro(Pageable pageable) {
+        return clienteService.Cadastro(pageable);
+    }
+
+    @GetMapping("/editar/{id}")
+    public ResponseEntity<ClienteDTO> editar(@PathVariable Long id) {
+        return ResponseEntity.ok(clienteService.Editar(id));
+    }
+
+    @GetMapping("/excluir/{id}")
+    public ResponseEntity<ClienteDTO> excluir(@PathVariable Long id) {
+        return ResponseEntity.ok(clienteService.Excluir(id));
+    }
+
+    @PostMapping
+    public ResponseEntity<ClienteDTO> criar(@Valid @RequestBody ClienteDTO dto) {
+        ClienteDTO saved = clienteService.salvar(dto);
+        return ResponseEntity.created(URI.create("/api/clientes/" + saved.getId())).body(saved);
+    }
+}
