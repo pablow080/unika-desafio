@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import org.desafioestagio.backend.dto.EnderecoDTO;
 import org.desafioestagio.backend.exception.ClienteNaoEncontradoException;
 import org.desafioestagio.backend.exception.EnderecoNaoEncontradoException;
-import org.desafioestagio.backend.exception.OperacaoNaoPermitidaException;
 import org.desafioestagio.backend.model.Cliente;
 import org.desafioestagio.backend.model.Endereco;
 import org.desafioestagio.backend.repository.ClienteRepository;
@@ -59,78 +58,70 @@ public class EnderecoService {
             endereco.setPrincipal(true);
         }
 
+        if (dto.isEnderecoPrincipal()) {
+            desmarcarEnderecosPrincipais(cliente.getId());
+            endereco.setPrincipal(true);
+        }
+
         Endereco enderecoSalvo = enderecoRepository.save(endereco);
         return convertToDTO(enderecoSalvo);
     }
 
     @Transactional
     public EnderecoDTO atualizar(Long id, @Valid EnderecoDTO dto) {
-        Endereco endereco = enderecoRepository.findById(id)
+        Endereco enderecoExistente = enderecoRepository.findById(id)
                 .orElseThrow(() -> new EnderecoNaoEncontradoException(id));
 
-        // Verifica se o endereço pertence ao cliente correto
-        if (!endereco.getCliente().getId().equals(dto.getClienteId())) {
-            throw new OperacaoNaoPermitidaException("Não é permitido alterar o cliente do endereço");
+        Cliente cliente = clienteRepository.findById(dto.getClienteId())
+                .orElseThrow(() -> new ClienteNaoEncontradoException(dto.getClienteId()));
+
+        enderecoExistente.setLogradouro(dto.getLogradouro());
+        enderecoExistente.setNumero(dto.getNumero());
+        enderecoExistente.setCep(dto.getCep());
+        enderecoExistente.setBairro(dto.getBairro());
+        enderecoExistente.setTelefone(dto.getTelefone());
+        enderecoExistente.setCidade(dto.getCidade());
+        enderecoExistente.setEstado(dto.getEstado());
+        enderecoExistente.setComplemento(dto.getComplemento());
+        enderecoExistente.setCliente(cliente);
+
+        if (dto.isEnderecoPrincipal()) {
+            desmarcarEnderecosPrincipais(cliente.getId());
+            enderecoExistente.setPrincipal(true);
+        } else {
+            enderecoExistente.setPrincipal(false);
         }
 
-        endereco.setLogradouro(dto.getLogradouro());
-        endereco.setNumero(dto.getNumero());
-        endereco.setComplemento(dto.getComplemento());
-        endereco.setBairro(dto.getBairro());
-        endereco.setCidade(dto.getCidade());
-        endereco.setEstado(dto.getEstado());
-        endereco.setCep(dto.getCep());
-        endereco.setPrincipal(dto.isPrincipal());
-
-        Endereco enderecoAtualizado = enderecoRepository.save(endereco);
+        Endereco enderecoAtualizado = enderecoRepository.save(enderecoExistente);
         return convertToDTO(enderecoAtualizado);
     }
 
-    @Transactional
-    public void excluir(Long id) {
-        Endereco endereco = enderecoRepository.findById(id)
-                .orElseThrow(() -> new EnderecoNaoEncontradoException(id));
 
-        if (endereco.isPrincipal()) {
-            throw new OperacaoNaoPermitidaException("Não é permitido excluir o endereço principal");
+    private void desmarcarEnderecosPrincipais(Long clienteId) {
+        List<Endereco> enderecosDoCliente = enderecoRepository.findByClienteId(clienteId);
+        for (Endereco endereco : enderecosDoCliente) {
+            if (endereco.isPrincipal()) {
+                endereco.setPrincipal(false);
+                enderecoRepository.save(endereco);
+            }
         }
-
-        enderecoRepository.delete(endereco);
     }
 
-    @Transactional
-    public void definirPrincipal(Long clienteId, Long enderecoId) {
-        Cliente cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new ClienteNaoEncontradoException(clienteId));
-
-        Endereco endereco = enderecoRepository.findById(enderecoId)
-                .orElseThrow(() -> new EnderecoNaoEncontradoException(enderecoId));
-
-        if (!endereco.getCliente().getId().equals(clienteId)) {
-            throw new OperacaoNaoPermitidaException("Endereço não pertence ao cliente informado");
-        }
-
-        // Remove a principal atual
-        cliente.getEnderecos().forEach(e -> e.setPrincipal(false));
-
-        // Define o novo como principal
-        endereco.setPrincipal(true);
-        enderecoRepository.save(endereco);
-    }
 
     private EnderecoDTO convertToDTO(Endereco endereco) {
-        return new EnderecoDTO(
-                endereco.getId(),
-                endereco.getCliente().getId(),
-                endereco.getLogradouro(),
-                endereco.getNumero(),
-                endereco.getComplemento(),
-                endereco.getBairro(),
-                endereco.getCidade(),
-                endereco.getEstado(),
-                endereco.getCep(),
-                endereco.isPrincipal()
-        );
+        EnderecoDTO dto = new EnderecoDTO();
+        dto.setId(endereco.getId());
+        dto.setLogradouro(endereco.getLogradouro());
+        dto.setNumero(endereco.getNumero());
+        dto.setCep(endereco.getCep());
+        dto.setBairro(endereco.getBairro());
+        dto.setTelefone(endereco.getTelefone());
+        dto.setCidade(endereco.getCidade());
+        dto.setEstado(endereco.getEstado());
+        dto.setComplemento(endereco.getComplemento());
+        dto.setEnderecoPrincipal(endereco.isPrincipal());
+        dto.setClienteId(endereco.getCliente().getId());
+        return dto;
     }
 
     private Endereco convertToEntity(EnderecoDTO dto) {
@@ -138,26 +129,60 @@ public class EnderecoService {
         endereco.setId(dto.getId());
         endereco.setLogradouro(dto.getLogradouro());
         endereco.setNumero(dto.getNumero());
-        endereco.setComplemento(dto.getComplemento());
+        endereco.setCep(dto.getCep());
         endereco.setBairro(dto.getBairro());
+        endereco.setTelefone(dto.getTelefone());
         endereco.setCidade(dto.getCidade());
         endereco.setEstado(dto.getEstado());
-        endereco.setCep(dto.getCep());
-        endereco.setPrincipal(dto.isPrincipal());
+        endereco.setComplemento(dto.getComplemento());
+        endereco.setPrincipal(dto.isEnderecoPrincipal());
         return endereco;
     }
 
+
     @Transactional(readOnly = true)
     public Page<EnderecoDTO> listarPorCliente(Long clienteId, Pageable pageable) {
+        // Garante que o cliente existe
         if (!clienteRepository.existsById(clienteId)) {
             throw new ClienteNaoEncontradoException(clienteId);
         }
 
+        // Busca os endereços do cliente com paginação
         Page<Endereco> enderecos = enderecoRepository.findByClienteId(clienteId, pageable);
+
+        // Converte cada entidade para DTO
         List<EnderecoDTO> enderecosDTO = enderecos.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
         return new PageImpl<>(enderecosDTO, pageable, enderecos.getTotalElements());
+    }
+
+    @Transactional
+    public void definirPrincipal(Long clienteId, Long enderecoId) {
+        // Verifica se o cliente existe
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new ClienteNaoEncontradoException(clienteId));
+
+        // Busca o endereço e verifica existência
+        Endereco endereco = enderecoRepository.findById(enderecoId)
+                .orElseThrow(() -> new EnderecoNaoEncontradoException(enderecoId));
+
+        // Verifica se o endereço pertence ao cliente
+        if (!endereco.getCliente().getId().equals(clienteId)) {
+            throw new IllegalArgumentException("Endereço não pertence ao cliente.");
+        }
+
+        // Desmarcar todos os endereços do cliente
+        enderecoRepository.findByClienteId(clienteId).forEach(e -> {
+            if (e.isPrincipal()) {
+                e.setPrincipal(false);
+                enderecoRepository.save(e);
+            }
+        });
+
+        // Definir o novo endereço como principal
+        endereco.setPrincipal(true);
+        enderecoRepository.save(endereco);
     }
 }

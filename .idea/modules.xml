@@ -3,7 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/backend/backend.iml" filepath="$PROJECT_DIR$/backend/backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/unika-desafio.iml" filepath="$PROJECT_DIR$/.idea/unika-desafio.iml" />
+      <module fileurl="file://$PROJECT_DIR$/wicket.iml" filepath="$PROJECT_DIR$/wicket.iml" />
     </modules>
   </component>
 </project>

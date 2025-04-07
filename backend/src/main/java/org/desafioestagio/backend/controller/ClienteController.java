@@ -2,11 +2,14 @@ package org.desafioestagio.backend.controller;
 
 import jakarta.validation.Valid;
 import org.desafioestagio.backend.dto.ClienteDTO;
+import org.desafioestagio.backend.model.TipoPessoa;
 import org.desafioestagio.backend.service.ClienteService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -14,6 +17,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping("/api/clientes")
+@Validated
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -23,17 +27,18 @@ public class ClienteController {
         this.clienteService = clienteService;
     }
 
-    @GetMapping
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<ClienteDTO> listarTodos(Pageable pageable) {
         return clienteService.listarTodosDTO(pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ClienteDTO> buscarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.buscarDTOPorId(id));
+        ClienteDTO dto = clienteService.buscarDTOPorId(id);
+        return ResponseEntity.ok(dto);
     }
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ClienteDTO> criar(@Valid @RequestBody ClienteDTO dto) {
         ClienteDTO salvo = clienteService.salvar(dto);
         URI location = ServletUriComponentsBuilder
@@ -41,13 +46,16 @@ public class ClienteController {
                 .path("/{id}")
                 .buildAndExpand(salvo.getId())
                 .toUri();
+
         return ResponseEntity.created(location).body(salvo);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ClienteDTO> atualizar(@PathVariable Long id, @Valid @RequestBody ClienteDTO dto) {
-        return ResponseEntity.ok(clienteService.atualizar(id, dto));
+        ClienteDTO atualizado = clienteService.atualizar(id, dto);
+        return ResponseEntity.ok(atualizado);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id) {

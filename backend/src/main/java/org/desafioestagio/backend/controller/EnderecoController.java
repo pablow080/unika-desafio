@@ -67,17 +67,8 @@ public class EnderecoController {
         return ResponseEntity.ok(enderecoAtualizado);
     }
 
-    @DeleteMapping("/{enderecoId}")
-    public ResponseEntity<Void> excluirEndereco(
-            @PathVariable Long clienteId,
-            @PathVariable Long enderecoId) {
-
-        enderecoService.excluir(enderecoId);
-        return ResponseEntity.noContent().build();
-    }
-
     @PatchMapping("/{enderecoId}/principal")
-    public ResponseEntity<Void> definirEnderecoPrincipal(
+    public ResponseEntity<Void> marcarPrincipal(
             @PathVariable Long clienteId,
             @PathVariable Long enderecoId) {
 
