@@ -14,6 +14,13 @@
         <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>itext</id>
+            <url>https://repo.itextpdf.com</url>
+        </repository>
+    </repositories>
+
     <dependencies>
         <!-- Wicket 10 -->
         <dependency>
@@ -29,6 +36,48 @@
             <version>5.0.0</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.15.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents.client5</groupId>
+            <artifactId>httpclient5</artifactId>
+            <version>5.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-extensions</artifactId>
+            <version>10.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.13</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+            <!-- Dependência do iText 5 -->
+            <dependency>
+                <groupId>com.itextpdf</groupId>
+                <artifactId>itextpdf</artifactId>
+                <version>5.5.13.3</version>
+                <scope>compile</scope>
+            </dependency>
+        <dependency>
+            <groupId>org.apache.wicket</groupId>
+            <artifactId>wicket-util</artifactId>
+            <version>10.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+            <version>2.15.3</version> <!-- ou compatível com sua versão do Jackson -->
+        </dependency>
     </dependencies>
 
     <build>
@@ -37,16 +86,14 @@
             <plugin>
                 <groupId>org.eclipse.jetty.ee10</groupId>
                 <artifactId>jetty-ee10-maven-plugin</artifactId>
-                <version>12.0.5</version>
+                <version>12.0.5</version> <!-- Verifique a versão mais recente -->
                 <configuration>
+                    <httpConnector>
+                        <port>8081</port>
+                    </httpConnector>
                     <webApp>
                         <contextPath>/wicket</contextPath>
                     </webApp>
-                    <connectors>
-                        <connector implementation="org.eclipse.jetty.server.ServerConnector">
-                            <port>8081</port>
-                        </connector>
-                    </connectors>
                 </configuration>
             </plugin>
         </plugins>

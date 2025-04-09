@@ -1,0 +1,212 @@
+package org.desafioestagio.wicket;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.apache.wicket.ajax.AjaxRequestTarget;
+import org.apache.wicket.ajax.markup.html.AjaxLink;
+import org.apache.wicket.ajax.markup.html.form.AjaxButton;
+import org.apache.wicket.markup.html.WebPage;
+import org.apache.wicket.markup.html.WebMarkupContainer;
+import org.apache.wicket.markup.html.basic.Label;
+import org.apache.wicket.markup.html.form.Form;
+import org.apache.wicket.markup.html.form.TextField;
+import org.apache.wicket.markup.html.list.ListItem;
+import org.apache.wicket.markup.html.list.ListView;
+import org.apache.wicket.model.IModel;
+import org.apache.wicket.model.LoadableDetachableModel;
+import org.apache.wicket.model.Model;
+import org.apache.wicket.request.flow.RedirectToUrlException;
+import org.apache.wicket.request.handler.resource.ResourceStreamRequestHandler;
+import org.apache.wicket.request.resource.ContentDisposition;
+import org.apache.wicket.util.resource.AbstractResourceStreamWriter;
+import org.desafioestagio.wicket.model.Cliente;
+import org.apache.wicket.markup.html.link.Link;
+
+import java.io.*;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class ClienteListPage extends WebPage {
+
+    private final TextField<String> filtroTexto;
+    private final WebMarkupContainer container;
+    private final IModel<List<Cliente>> clientesModel;
+
+    public ClienteListPage() {
+        // Modelo que carrega a lista de clientes dinamicamente
+        clientesModel = new LoadableDetachableModel<>() {
+            @Override
+            protected List<Cliente> load() {
+                return carregarClientes(null);
+            }
+        };
+
+        // Formulário de filtro
+        Form<Void> filtroForm = new Form<>("filtroForm");
+        filtroTexto = new TextField<>("filtroTexto", Model.of(""));
+        filtroForm.add(filtroTexto);
+
+        filtroForm.add(new AjaxButton("buscar") {
+            @Override
+            protected void onSubmit(AjaxRequestTarget target) {
+                String filtro = filtroTexto.getModelObject();
+                clientesModel.setObject(carregarClientes(filtro)); // recarrega
+                target.add(container); // atualiza Ajax
+            }
+        });
+        add(filtroForm);
+
+        // Botão para novo cliente
+        add(new Link<Void>("novoCliente") {
+            @Override
+            public void onClick() {
+                setResponsePage(ClienteFormPage.class);
+            }
+        });
+
+        add(new Link<Void>("exportarPdf") {
+            @Override
+            public void onClick() {
+                throw new RedirectToUrlException("http://localhost:8080/api/clientes/exportar/pdf");
+            }
+        });
+
+        add(new Link<Void>("exportarExcel") {
+            @Override
+            public void onClick() {
+                throw new RedirectToUrlException("http://localhost:8080/api/clientes/exportar/excel");
+            }
+        });
+
+
+        // Container Ajax para a tabela
+        container = new WebMarkupContainer("container");
+        container.setOutputMarkupId(true);
+        add(container);
+
+        // ListView de clientes
+        ListView<Cliente> listView = new ListView<>("listaClientes", clientesModel) {
+            @Override
+            protected void populateItem(ListItem<Cliente> item) {
+                Cliente cliente = item.getModelObject();
+                item.add(new Label("id", cliente.getId()));
+                item.add(new Label("tipoPessoa", cliente.getTipoPessoa().name()));
+                item.add(new Label("cpfCnpj", cliente.getCpfCnpj()));
+                item.add(new Label("nomeOuRazao", cliente.getNomeOuRazao()));
+                item.add(new Label("rgIe", cliente.getRgIe()));
+                item.add(new Label("email", cliente.getEmail()));
+                item.add(new Label("ativo", cliente.isAtivo() ? "Sim" : "Não"));
+                item.add(new Label("dataReferencia", cliente.getDataReferenciaModel()));
+                item.add(new Label("telefone", cliente.getTelefonePrincipal()));
+            }
+        };
+        container.add(listView);
+    }
+
+    private List<Cliente> carregarClientes(String filtro) {
+        try {
+            String url = "http://localhost:8080/api/clientes?page=0&size=50";
+            if (filtro != null && !filtro.isEmpty()) {
+                url += "&search=" + URLEncoder.encode(filtro, StandardCharsets.UTF_8);
+            }
+
+            HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod("GET");
+            con.setRequestProperty("Accept", "application/json");
+
+            if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                throw new IOException("Erro ao carregar clientes. Código: " + con.getResponseCode());
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+            JsonNode root = mapper.readTree(con.getInputStream());
+            JsonNode content = root.has("content") ? root.get("content") : root;
+
+            List<Cliente> lista = new ArrayList<>();
+            for (JsonNode node : content) {
+                Cliente cli = mapper.treeToValue(node, Cliente.class);
+                lista.add(cli);
+            }
+            return lista;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+
+    private void exportarArquivo(AjaxRequestTarget target, String tipo) {
+        String filtro = filtroTexto.getModelObject();
+        byte[] arquivoBytes = baixarArquivo(tipo, filtro);
+
+        ResourceStreamRequestHandler handler = new ResourceStreamRequestHandler(
+                new AbstractResourceStreamWriter() {
+                    @Override
+                    public void write(OutputStream output) throws IOException {
+                        output.write(arquivoBytes);
+                    }
+
+                    @Override
+                    public String getContentType() {
+                        return switch (tipo) {
+                            case "pdf" -> "application/pdf";
+                            case "excel" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                            default -> "application/octet-stream";
+                        };
+                    }
+                },
+                tipo.equals("pdf") ? "clientes.pdf" : "clientes.xlsx"
+        );
+        handler.setContentDisposition(ContentDisposition.ATTACHMENT);
+        getRequestCycle().scheduleRequestHandlerAfterCurrent(handler);
+    }
+
+    private static final String BASE_API_URL = "http://localhost:8080/api/clientes/exportar/";
+
+    private byte[] baixarArquivo(String tipo, String filtro) {
+        HttpURLConnection connection = null;
+
+        try {
+            // Monta a URL com base no tipo e filtro
+            StringBuilder urlBuilder = new StringBuilder(BASE_API_URL).append(tipo);
+            if (filtro != null && !filtro.isBlank()) {
+                urlBuilder.append("?search=").append(URLEncoder.encode(filtro, StandardCharsets.UTF_8));
+            }
+
+            URL url = new URL(urlBuilder.toString());
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("Accept", "*/*");
+
+            int status = connection.getResponseCode();
+            if (status != HttpURLConnection.HTTP_OK) {
+                String msg = new String(connection.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+                throw new IOException("Erro ao gerar arquivo (" + status + "): " + msg);
+            }
+
+            try (InputStream in = connection.getInputStream();
+                 ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+                in.transferTo(out);
+                return out.toByteArray();
+            }
+
+        } catch (IOException e) {
+            System.err.println("Erro ao baixar arquivo [" + tipo + "]: " + e.getMessage());
+            e.printStackTrace();
+            return new byte[0];
+        } finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+    }
+}

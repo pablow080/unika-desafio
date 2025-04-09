@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:wicket="http://wicket.apache.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Clientes</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        h1 {
+            color: #343a40;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .toolbar form {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .toolbar input[type="text"] {
+            padding: 0.5rem;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            width: 250px;
+        }
+
+        .toolbar button, .toolbar a {
+            padding: 0.5rem 1rem;
+            border: none;
+            background-color: #0d6efd;
+            color: white;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .toolbar button:hover, .toolbar a:hover {
+            background-color: #0b5ed7;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        th {
+            background-color: #e9ecef;
+        }
+
+        tr:hover {
+            background-color: #f1f3f5;
+        }
+
+    </style>
+</head>
+<body>
+
+<h1>Clientes</h1>
+
+<div class="toolbar">
+    <form wicket:id="filtroForm">
+        <label>
+            <input type="text" wicket:id="filtroTexto" placeholder="Filtrar por nome, CPF/CNPJ..." />
+        </label>
+        <button type="submit" wicket:id="buscar">Buscar</button>
+    </form>
+
+    <div>
+        <a wicket:id="novoCliente">Novo Cliente</a>
+        <a wicket:id="exportarPdf">Exportar PDF</a>
+        <a wicket:id="exportarExcel">Exportar Excel</a>
+    </div>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Tipo Pessoa</th>
+        <th>CPF/CNPJ</th>
+        <th>Nome/Razão Social</th>
+        <th>RG/IE</th>
+        <th>Email</th>
+        <th>Ativo</th>
+        <th>Data Nascimento</th>
+        <th>Telefone</th>
+    </tr>
+    </thead>
+    <tbody wicket:id="container">
+    <tr wicket:id="listaClientes">
+        <td><span wicket:id="id"></span></td>
+        <td><span wicket:id="tipoPessoa"></span></td>
+        <td><span wicket:id="cpfCnpj"></span></td>
+        <td><span wicket:id="nomeOuRazao"></span></td>
+        <td><span wicket:id="rgIe"></span></td>
+        <td><span wicket:id="email"></span></td>
+        <td><span wicket:id="ativo"></span></td>
+        <td><span wicket:id="dataReferencia"></span></td>
+        <td><span wicket:id="telefone"></span></td>
+    </tr>
+    </tbody>
+
+</table>
+
+</body>
+</html>
