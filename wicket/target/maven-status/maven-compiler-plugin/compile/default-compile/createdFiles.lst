@@ -1,5 +1,4 @@
 org\desafioestagio\wicket\ClienteRestClient$2.class
-org\desafioestagio\wicket\ClienteFormPage$2.class
 org\desafioestagio\wicket\service\ClienteService.class
 org\desafioestagio\wicket\ClienteListPage$2.class
 org\desafioestagio\wicket\model\Documento.class
@@ -13,9 +12,5 @@ org\desafioestagio\wicket\ClienteListPage.class
 org\desafioestagio\wicket\ClienteListPage$4.class
 org\desafioestagio\wicket\model\Endereco.class
 org\desafioestagio\wicket\WicketApplication.class
-org\desafioestagio\wicket\ClienteFormPage.class
-org\desafioestagio\wicket\ClienteListPage$7.class
 org\desafioestagio\wicket\model\TipoPessoa.class
-org\desafioestagio\wicket\ClienteFormPage$1.class
-org\desafioestagio\wicket\ClienteFormPage$Cliente.class
 org\desafioestagio\wicket\ClienteListPage$3.class

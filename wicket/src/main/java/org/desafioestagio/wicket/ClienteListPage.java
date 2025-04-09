@@ -63,13 +63,6 @@ public class ClienteListPage extends WebPage {
         });
         add(filtroForm);
 
-        // Botão para novo cliente
-        add(new Link<Void>("novoCliente") {
-            @Override
-            public void onClick() {
-                setResponsePage(ClienteFormPage.class);
-            }
-        });
 
         add(new Link<Void>("exportarPdf") {
             @Override
@@ -103,7 +96,6 @@ public class ClienteListPage extends WebPage {
                 item.add(new Label("rgIe", cliente.getRgIe()));
                 item.add(new Label("email", cliente.getEmail()));
                 item.add(new Label("ativo", cliente.isAtivo() ? "Sim" : "Não"));
-                item.add(new Label("dataReferencia", cliente.getDataReferenciaModel()));
                 item.add(new Label("telefone", cliente.getTelefonePrincipal()));
             }
         };
