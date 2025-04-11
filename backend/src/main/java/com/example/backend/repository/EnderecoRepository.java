@@ -19,4 +19,10 @@ public interface EnderecoRepository extends JpaRepository<Endereco, Long> {
     @Modifying
     @Query("DELETE FROM Endereco e WHERE e.cliente.id = :clienteId")
     void deleteByClienteId(@Param("clienteId") Long clienteId);
+
+    @Query("SELECT e.cep FROM Endereco e WHERE e.id = :id")
+    String getCepByEnderecoId(Long id);
+
+    @Query("SELECT e.telefone FROM Endereco e WHERE e.id = :id")
+    String getTelefoneByEnderecoId(Long id);
 }

@@ -13,7 +13,7 @@ public class DatabaseConfig {
         return DataSourceBuilder.create()
                 .url("jdbc:mysql://localhost:3306/database-desafio")
                 .username("root")
-                .password("Pablo#3008") // Aqui pode usar a senha normal
+                .password("Pablo#2005") // Aqui pode usar a senha normal
                 .driverClassName("com.mysql.cj.jdbc.Driver")
                 .build();
     }

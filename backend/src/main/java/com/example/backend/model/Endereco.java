@@ -42,6 +42,7 @@ public class Endereco {
 
     @Column(nullable = false)
     private boolean enderecoPrincipal;
+    private boolean principal = enderecoPrincipal;
 
     private String complemento;
 

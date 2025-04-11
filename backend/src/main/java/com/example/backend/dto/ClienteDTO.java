@@ -1,7 +1,11 @@
 package com.example.backend.dto;
 
 import com.example.backend.model.Cliente;
+import com.example.backend.model.Endereco;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.itextpdf.text.Phrase;
+import com.itextpdf.text.pdf.PdfPCell;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -17,6 +21,8 @@ import java.util.List;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ClienteDTO {
+
+    private Endereco endereco;
 
     @Schema(description = "ID do cliente", example = "1")
     private Long id;
@@ -63,18 +69,4 @@ public class ClienteDTO {
     @Valid
     @Schema(description = "Lista de endereços do cliente")
     private List<EnderecoDTO> enderecos;
-
-    // Validação condicional
-    @AssertTrue(message = "Dados inconsistentes para o tipo de pessoa")
-    public boolean isDadosConsistentes() {
-        if (tipoPessoa == null) return false;
-
-        if (tipoPessoa == Cliente.TipoPessoa.FISICA) {
-            return nome != null && !nome.isBlank() &&
-                    (razaoSocial == null || razaoSocial.isBlank());
-        } else {
-            return razaoSocial != null && !razaoSocial.isBlank() &&
-                    (nome == null || nome.isBlank());
-        }
-    }
 }

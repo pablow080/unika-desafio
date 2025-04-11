@@ -1,4 +1,7 @@
+org\desafioestagio\wicket\service\EnderecoService.class
 org\desafioestagio\wicket\ClienteListPage.class
+org\desafioestagio\wicket\service\ClienteService.class
+org\desafioestagio\wicket\util\DateUtils.class
 org\desafioestagio\wicket\model\Endereco.class
 org\desafioestagio\wicket\WicketApplication.class
 org\desafioestagio\wicket\model\TipoPessoa.class
