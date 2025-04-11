@@ -1,115 +1,52 @@
 package org.desafioestagio.wicket.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.wicket.model.Model;
 import org.desafioestagio.wicket.model.Endereco;
 
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class EnderecoService {
 
-    private static final String BASE_API_URL = "http://localhost:8080/api/clientes/";
+    private final Map<Long, Endereco> enderecoMap = new HashMap<>();
+    private final AtomicLong idGenerator = new AtomicLong(1L);
 
-    // Criação de um novo endereço
-    public static Endereco criarEndereco(Long clienteId, Endereco endereco) throws IOException {
-        String url = BASE_API_URL + clienteId + "/enderecos";
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setRequestMethod("POST");
-        con.setRequestProperty("Accept", "application/json");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setDoOutput(true);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonBody = mapper.writeValueAsString(endereco);
-
-        try (OutputStream os = con.getOutputStream()) {
-            byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
+    public Endereco salvar(Endereco endereco) {
+        if (endereco.getId() == null) {
+            endereco.setId(idGenerator.getAndIncrement());
         }
-
-        if (con.getResponseCode() == HttpURLConnection.HTTP_CREATED) {
-            try (InputStream in = con.getInputStream()) {
-                return mapper.readValue(in, Endereco.class);
-            }
-        } else {
-            throw new IOException("Erro ao criar endereço: " + con.getResponseCode());
-        }
+        enderecoMap.put(endereco.getId(), endereco);
+        return endereco;
     }
 
-    // Listar todos os endereços de um cliente
-    public static List<Endereco> listarEnderecos(Long clienteId) throws IOException {
-        String url = BASE_API_URL + clienteId + "/enderecos";
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setRequestMethod("GET");
-        con.setRequestProperty("Accept", "application/json");
-
-        if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException("Erro ao listar endereços: " + con.getResponseCode());
+    public Endereco atualizar(Endereco enderecoAtualizado) {
+        if (enderecoAtualizado.getId() == null || !enderecoMap.containsKey(enderecoAtualizado.getId())) {
+            throw new RuntimeException("Endereço não encontrado com ID: " + enderecoAtualizado.getId());
         }
 
-        ObjectMapper mapper = new ObjectMapper();
-        try (InputStream in = con.getInputStream()) {
-            return mapper.readValue(in, mapper.getTypeFactory().constructCollectionType(List.class, Endereco.class));
-        }
+        enderecoMap.put(enderecoAtualizado.getId(), enderecoAtualizado);
+        return enderecoAtualizado;
     }
 
-    // Buscar um endereço específico por ID
-    public static Endereco buscarEndereco(Long clienteId, Long enderecoId) throws IOException {
-        String url = BASE_API_URL + clienteId + "/enderecos/" + enderecoId;
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setRequestMethod("GET");
-        con.setRequestProperty("Accept", "application/json");
-
-        if (con.getResponseCode() != HttpURLConnection.HTTP_OK) {
-            throw new IOException("Erro ao buscar endereço: " + con.getResponseCode());
+    public Endereco buscarPorId(Long id) {
+        Endereco endereco = enderecoMap.get(id);
+        if (endereco == null) {
+            throw new RuntimeException("Endereço não encontrado com ID: " + id);
         }
-
-        ObjectMapper mapper = new ObjectMapper();
-        try (InputStream in = con.getInputStream()) {
-            return mapper.readValue(in, Endereco.class);
-        }
+        return endereco;
     }
 
-    // Atualizar um endereço existente
-    public static Endereco atualizarEndereco(Long clienteId, Long enderecoId, Endereco endereco) throws IOException {
-        String url = BASE_API_URL + clienteId + "/enderecos/" + enderecoId;
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setRequestMethod("PUT");
-        con.setRequestProperty("Accept", "application/json");
-        con.setRequestProperty("Content-Type", "application/json");
-        con.setDoOutput(true);
-
-        ObjectMapper mapper = new ObjectMapper();
-        String jsonBody = mapper.writeValueAsString(endereco);
-
-        try (OutputStream os = con.getOutputStream()) {
-            byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
-        }
-
-        if (con.getResponseCode() == HttpURLConnection.HTTP_OK) {
-            try (InputStream in = con.getInputStream()) {
-                return mapper.readValue(in, Endereco.class);
-            }
-        } else {
-            throw new IOException("Erro ao atualizar endereço: " + con.getResponseCode());
-        }
+    public void deletar(Long id) {
+        enderecoMap.remove(id);
     }
 
-    // Marcar um endereço como principal
-    public static void marcarPrincipal(Long clienteId, Long enderecoId) throws IOException {
-        String url = BASE_API_URL + clienteId + "/enderecos/" + enderecoId + "/principal";
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setRequestMethod("PATCH");
-        con.setRequestProperty("Accept", "application/json");
+    public List<Endereco> listarTodos() {
+        return new ArrayList<>(enderecoMap.values());
+    }
 
-        if (con.getResponseCode() != HttpURLConnection.HTTP_NO_CONTENT) {
-            throw new IOException("Erro ao marcar endereço como principal: " + con.getResponseCode());
-        }
+    public List<Endereco> listarPorClienteId(Long clienteId) {
+        return enderecoMap.values().stream()
+                .filter(e -> e.getClienteId() != null && clienteId.equals(e.getClienteId()))
+                .collect(Collectors.toList());
     }
 }

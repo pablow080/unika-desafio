@@ -1,7 +1,6 @@
 package com.example.backend.dto;
 
 import com.example.backend.model.Cliente;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;

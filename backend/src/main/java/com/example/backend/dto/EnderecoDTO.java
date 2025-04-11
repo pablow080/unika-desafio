@@ -5,7 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 
 @Data
 @NoArgsConstructor
@@ -34,10 +33,9 @@ public class EnderecoDTO {
     @NotBlank(message = "Estado é obrigatório")
     private String estado;
 
-    @NotNull(message = "Indicador de endereço principal é obrigatório")
-    private Boolean principal;
-
     private String complemento;
 
     private Long clienteId;
+
+    private boolean enderecoPrincipal;
 }

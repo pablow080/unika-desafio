@@ -1,5 +1,6 @@
 package com.example.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,19 +41,12 @@ public class Endereco {
     private String estado;
 
     @Column(nullable = false)
-    private Boolean principal = false;
+    private boolean enderecoPrincipal;
 
     private String complemento;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id", nullable = false)
-    private com.example.backend.model.Cliente cliente;
-
-    public Boolean isEnderecoPrincipal() {
-        return this.principal;
-    }
-
-    public void setEnderecoPrincipal(Boolean enderecoPrincipal) {
-        this.principal = enderecoPrincipal;
-    }
+    @JsonBackReference
+    private Cliente cliente;
 }

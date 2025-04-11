@@ -6,6 +6,7 @@ import com.example.backend.exception.ClienteException;
 import com.example.backend.mapper.ClienteMapper;
 import com.example.backend.mapper.EnderecoMapper;
 import com.example.backend.model.Cliente;
+import com.example.backend.model.Endereco;
 import com.example.backend.repository.ClienteRepository;
 import com.example.backend.repository.EnderecoRepository;
 import com.example.backend.util.ExcelExporter;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,25 +27,32 @@ public class ClienteServiceImpl implements ClienteService {
 
     private final ClienteRepository clienteRepository;
     private final EnderecoRepository enderecoRepository;
-    private final ClienteMapper clienteMapper;
     private final ExcelExporter excelExporter;
     private final PdfExporter pdfExporter;
+    private final ClienteMapper clienteMapper;
+    private final EnderecoMapper enderecoMapper;
 
     @Override
     @Transactional
-    public ClienteDTO criarCliente(ClienteDTO clienteDTO) throws ClienteException {
-        validarCliente(clienteDTO);
-
+    public ClienteDTO criarCliente(ClienteDTO clienteDTO) {
+        // 1. Converte e salva o cliente sem endereços (ainda)
         Cliente cliente = clienteMapper.toEntity(clienteDTO);
-        cliente = clienteRepository.save(cliente);
+        cliente.setEnderecos(null); // para não tentar cascade incorretamente
+        cliente = clienteRepository.saveAndFlush(cliente); // força salvar e obter o ID
 
-        // Salvar endereços
+        // 2. Constrói a lista de endereços com o cliente setado
         if (clienteDTO.getEnderecos() != null) {
             Cliente finalCliente = cliente;
-            clienteDTO.getEnderecos().forEach(enderecoDTO -> {
-                enderecoDTO.setClienteId(finalCliente.getId());
-                enderecoRepository.save(EnderecoMapper.INSTANCE.toEntity(enderecoDTO));
-            });
+            List<Endereco> enderecos = clienteDTO.getEnderecos().stream()
+                    .map(dto -> {
+                        Endereco endereco = enderecoMapper.toEntity(dto);
+                        endereco.setCliente(finalCliente); // seta o cliente pai
+                        return endereco;
+                    })
+                    .collect(Collectors.toList());
+
+            enderecoRepository.saveAll(enderecos);
+            cliente.setEnderecos(enderecos); // agora sim, associa no objeto principal
         }
 
         return clienteMapper.toDto(cliente);
@@ -52,25 +61,49 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional
     public ClienteDTO atualizarCliente(Long id, ClienteDTO clienteDTO) throws ClienteException {
-        Cliente clienteExistente = clienteRepository.findById(id)
-                .orElseThrow(() -> new ClienteException("Cliente não encontrado com ID: " + id));
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ClienteException("Cliente não encontrado"));
 
-        validarClienteParaAtualizacao(clienteDTO, clienteExistente);
+        // Atualiza dados principais do cliente
+        cliente.setCpfCnpj(clienteDTO.getCpfCnpj());
+        cliente.setEmail(clienteDTO.getEmail());
+        cliente.setTipoPessoa(clienteDTO.getTipoPessoa());
+        cliente.setNome(clienteDTO.getNome());
+        cliente.setRg(clienteDTO.getRg());
+        cliente.setRazaoSocial(clienteDTO.getRazaoSocial());
+        cliente.setInscricaoEstadual(clienteDTO.getInscricaoEstadual());
+        cliente.setDataNascimento(clienteDTO.getDataNascimento());
+        cliente.setAtivo(clienteDTO.getAtivo());
 
-        Cliente clienteAtualizado = clienteMapper.toEntity(clienteDTO);
-        clienteAtualizado.setId(id);
-        clienteAtualizado = clienteRepository.save(clienteAtualizado);
+        // Processa endereços
+        List<Long> idsDTO = clienteDTO.getEnderecos().stream()
+                .map(EnderecoDTO::getId)
+                .filter(Objects::nonNull)
+                .toList();
 
-        // Atualizar endereços
-        enderecoRepository.deleteByClienteId(id);
-        if (clienteDTO.getEnderecos() != null) {
-            clienteDTO.getEnderecos().forEach(enderecoDTO -> {
-                enderecoDTO.setClienteId(id);
-                enderecoRepository.save(EnderecoMapper.INSTANCE.toEntity(enderecoDTO));
-            });
+        List<Endereco> enderecosExistentes = enderecoRepository.findByClienteId(id);
+        for (Endereco endereco : enderecosExistentes) {
+            if (!idsDTO.contains(endereco.getId())) {
+                enderecoRepository.delete(endereco);
+            }
         }
 
-        return clienteMapper.toDto(clienteAtualizado);
+        Cliente finalCliente = cliente;
+        List<Endereco> novosEnderecos = clienteDTO.getEnderecos().stream()
+                .map(dto -> {
+                    Endereco endereco = enderecoMapper.toEntity(dto);
+                    endereco.setCliente(finalCliente);
+                    return endereco;
+                })
+                .collect(Collectors.toList());
+
+        cliente.setEnderecos(enderecoRepository.saveAll(novosEnderecos));
+
+        // Limpa os campos inconsistentes conforme o tipo de pessoa
+        limparCamposConformeTipoPessoa(cliente);
+        cliente = clienteRepository.save(cliente);
+
+        return clienteMapper.toDto(cliente);
     }
 
     @Override
@@ -97,10 +130,11 @@ public class ClienteServiceImpl implements ClienteService {
     @Override
     @Transactional
     public void excluirCliente(Long id) throws ClienteException {
-        if (!clienteRepository.existsById(id)) {
-            throw new ClienteException("Cliente não encontrado com ID: " + id);
-        }
-        clienteRepository.deleteById(id);
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ClienteException("Cliente não encontrado"));
+
+        enderecoRepository.deleteAll(cliente.getEnderecos());
+        clienteRepository.delete(cliente);
     }
 
     @Override
@@ -159,6 +193,18 @@ public class ClienteServiceImpl implements ClienteService {
             if (clienteDTO.getRazaoSocial() == null || clienteDTO.getRazaoSocial().trim().isEmpty()) {
                 throw new ClienteException("Razão social é obrigatória para pessoa jurídica");
             }
+        }
+    }
+
+    private void limparCamposConformeTipoPessoa(Cliente cliente) {
+        if (cliente.getTipoPessoa() == Cliente.TipoPessoa.FISICA) {
+            cliente.setRazaoSocial(null);
+            cliente.setInscricaoEstadual(null);
+            cliente.setDataCriacao(null);
+        } else {
+            cliente.setNome(null);
+            cliente.setRg(null);
+            cliente.setDataNascimento(null);
         }
     }
 }

@@ -1,66 +1,43 @@
 <!DOCTYPE html>
-<html xmlns:wicket="http://wicket.apache.org">
+<html xmlns:wicket="http://wicket.apache.org" lang="pt-BR">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <head>
     <meta charset="UTF-8">
     <title>Lista de Clientes</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
 </head>
-<body style="font-family: 'Segoe UI', sans-serif; background-color: #f8f9fa; padding: 2rem; color: #333;">
+<body>
+<div class="container mt-4">
+    <h2>Lista de Clientes</h2>
 
-<h1 style="color: #343a40; text-align: center;">Clientes</h1>
-
-<div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <form wicket:id="filtroForm" style="display: flex; gap: 0.5rem;">
-        <label>
-            <input type="text" wicket:id="filtroTexto" placeholder="Filtrar por nome, CPF/CNPJ..."
-                   style="padding: 0.5rem; border: 1px solid #ced4da; border-radius: 4px; width: 250px;" />
-        </label>
-        <button type="submit" wicket:id="buscar"
-                style="padding: 0.5rem 1rem; border: none; background-color: #0d6efd; color: white;
-                       border-radius: 4px; cursor: pointer; font-weight: 500;">
-            Buscar
-        </button>
-    </form>
-
-    <div>
-        <a wicket:id="exportarPdf"
-           style="padding: 0.5rem 1rem; border: none; background-color: #0d6efd; color: white;
-                  border-radius: 4px; text-decoration: none; cursor: pointer; font-weight: 500;">
-            Exportar PDF
-        </a>
-        <a wicket:id="exportarExcel"
-           style="padding: 0.5rem 1rem; border: none; background-color: #0d6efd; color: white;
-                  border-radius: 4px; text-decoration: none; cursor: pointer; font-weight: 500;">
-            Exportar Excel
-        </a>
-    </div>
+    <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+            <th>Tipo Pessoa</th>
+            <th>CPF/CNPJ</th>
+            <th>Nome/Razão Social</th>
+            <th>RG/IE</th>
+            <th>Email</th>
+            <th>Telefone</th>
+            <th>Cidade</th>
+            <th>Estado</th>
+            <th>Ativo</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr wicket:id="listaClientes">
+            <td><span wicket:id="tipoPessoa"></span></td>
+            <td><span wicket:id="cpfCnpj"></span></td>
+            <td><span wicket:id="nomeRazao"></span></td>
+            <td><span wicket:id="rgIe"></span></td>
+            <td><span wicket:id="email"></span></td>
+            <th><span wicket:id="telefone"></span></th>
+            <td><span wicket:id="cidade"></span></td>
+            <td><span wicket:id="estado"></span></td>
+            <td><span wicket:id="ativo"></span></td>
+        </tr>
+        </tbody>
+    </table>
 </div>
-
-<table style="width: 100%; border-collapse: collapse; background-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-    <thead>
-    <tr>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">ID</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">Tipo Pessoa</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">CPF/CNPJ</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">Nome/Razão Social</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">RG/IE</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">Email</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">Ativo</th>
-        <th style="padding: 0.75rem; border-bottom: 2px solid #dee2e6; background-color: #e9ecef; text-align: left;">Telefone</th>
-    </tr>
-    </thead>
-    <tbody wicket:id="container">
-    <tr wicket:id="listaClientes" style="background-color: #f1f3f5;">
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="id"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="tipoPessoa"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="cpfCnpj"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="nomeOuRazao"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="rgIe"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="email"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="ativo"></span></td>
-        <td style="padding: 0.75rem; border-bottom: 1px solid #dee2e6; text-align: left;"><span wicket:id="telefone"></span></td>
-    </tr>
-    </tbody>
-</table>
-
 </body>
 </html>

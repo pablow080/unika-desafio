@@ -14,7 +14,7 @@ public interface EnderecoRepository extends JpaRepository<Endereco, Long> {
 
     List<Endereco> findByClienteId(Long clienteId);
 
-    List<Endereco> findByClienteIdAndPrincipal(Long clienteId, Boolean principal);
+    List<Endereco> findByClienteIdAndEnderecoPrincipal(Long clienteId, Boolean enderecoPrincipal);
 
     @Modifying
     @Query("DELETE FROM Endereco e WHERE e.cliente.id = :clienteId")
